@@ -1,4 +1,9 @@
-import { battery, setMode, moveAim } from "../entities/battery.js";
+import {
+  battery,
+  setMode,
+  moveAim,
+  pickBatteryWeapon,
+} from "../entities/battery.js";
 import { ammo, roundState } from "../systems/round.js";
 import { player } from "../systems/storage.js";
 import { setShahedBuzz } from "../systems/sound.js";
@@ -248,7 +253,10 @@ export function initControls() {
       .hud-miss-badge.show { display: flex; }
       .hud-pad {
         position: fixed; left: 16px; bottom: 16px; display: grid;
-        grid-template-columns: repeat(3, 50px); gap: 5px; z-index: 20;
+        grid-template-columns: repeat(3, 50px);
+        row-gap: 6px;
+        column-gap: 16px;
+        z-index: 20;
       }
       .hud-btn {
         height: 50px; background: rgba(15, 23, 32, 0.78); color: #e2e8f0;
@@ -266,10 +274,10 @@ export function initControls() {
       }
       .hud-right {
         position: fixed; right: 16px; bottom: 16px;
-        display: flex; align-items: flex-end; gap: 8px; z-index: 16;
+        display: flex; align-items: flex-end; gap: 10px; z-index: 16;
       }
       .fire-stack {
-        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+        display: flex; flex-direction: column; align-items: stretch; gap: 22px;
       }
       .scope-icon-btn {
         height: 48px; font-size: 20px; font-weight: bold;
@@ -314,7 +322,8 @@ export function initControls() {
           left: 10px;
           bottom: 10px;
           grid-template-columns: repeat(3, 42px);
-          gap: 4px;
+          row-gap: 6px;
+          column-gap: 14px;
         }
         .hud-btn {
           height: 42px;
@@ -334,10 +343,10 @@ export function initControls() {
         .hud-right {
           right: 10px;
           bottom: 10px;
-          gap: 6px;
+          gap: 8px;
         }
         .fire-stack {
-          gap: 6px;
+          gap: 18px;
         }
         .scope-icon-btn {
           height: 40px;
@@ -531,6 +540,12 @@ export function initControls() {
   `;
   document.body.appendChild(hud);
 
+  const modeBtn = document.getElementById("btn-mode");
+  function switchMode(next) {
+    setMode(next);
+    modeBtn.textContent = getModeLabel(next);
+  }
+
   const dirs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   hud.querySelectorAll("[data-dir]").forEach((btn) => {
     const [dx, dy] = dirs[btn.dataset.dir];
@@ -548,17 +563,36 @@ export function initControls() {
     window.addEventListener("pointercancel", stop);
   });
 
-  // Плавная наводка пальцем по экрану на телефоне (без случайных выстрелов)
+  // Прямой тап по орудию на мобиле + плавная наводка пальцем по экрану
   let touchAimId = null;
   let lastTouchX = 0;
   let lastTouchY = 0;
 
   window.addEventListener("pointerdown", (e) => {
     if (!e.target || e.target.id !== "game") return;
+
     if (e.pointerType === "mouse") {
       if (e.button === 0) triggerFire();
       if (e.button === 2) toggleScope();
-    } else if (touchAimId === null) {
+      return;
+    }
+
+    if (gameState.ready && !gameState.scope) {
+      const rect = e.target.getBoundingClientRect();
+      const picked = pickBatteryWeapon(
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+        rect.width,
+        rect.height,
+      );
+      if (picked) {
+        switchMode(picked);
+        if (player.vibro && navigator.vibrate) navigator.vibrate(25);
+        return;
+      }
+    }
+
+    if (touchAimId === null) {
       touchAimId = e.pointerId;
       lastTouchX = e.clientX;
       lastTouchY = e.clientY;
@@ -607,12 +641,6 @@ export function initControls() {
   document.getElementById("btn-scope").addEventListener("click", () => {
     toggleScope();
   });
-
-  const modeBtn = document.getElementById("btn-mode");
-  function switchMode(next) {
-    setMode(next);
-    modeBtn.textContent = getModeLabel(next);
-  }
 
   modeBtn.addEventListener("click", () => {
     const order = ["torpedo", "aa", "rocket"];

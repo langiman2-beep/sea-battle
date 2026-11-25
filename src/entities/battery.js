@@ -97,11 +97,35 @@ export function getRocketLauncherPos(w, h) {
   };
 }
 
+// Определяем, нажал ли игрок пальцем прямо на одно из трёх орудий на берегу
+export function pickBatteryWeapon(px, py, w, h) {
+  const size = Math.min(w, h) * 0.28;
+  const rPos = getRocketLauncherPos(w, h);
+
+  const candidates = [
+    { mode: "torpedo", x: w * 0.41, y: h * 0.82, r: size * 0.48 },
+    { mode: "aa", x: w * 0.59, y: h * 0.82, r: size * 0.48 },
+    { mode: "rocket", x: rPos.x, y: rPos.y, r: rPos.size * 0.52 },
+  ];
+
+  let bestMode = null;
+  let bestDist = Infinity;
+
+  for (const c of candidates) {
+    const dist = Math.hypot(px - c.x, py - c.y);
+    if (dist <= c.r && dist < bestDist) {
+      bestDist = dist;
+      bestMode = c.mode;
+    }
+  }
+
+  return bestMode;
+}
+
 function drawActiveHalo(ctx, x, y, rx, ry, color, pulse) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Мягкое свечение на земле под активным орудием
   const grad = ctx.createRadialGradient(0, 0, rx * 0.15, 0, 0, rx * 1.25);
   grad.addColorStop(0, color.glow);
   grad.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -110,7 +134,6 @@ function drawActiveHalo(ctx, x, y, rx, ry, color, pulse) {
   ctx.ellipse(0, 0, rx * 1.25, ry * 1.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Чёткое пульсирующее кольцо выбора
   ctx.strokeStyle = color.stroke;
   ctx.globalAlpha = 0.55 + pulse * 0.4;
   ctx.lineWidth = 2.4;
@@ -224,7 +247,7 @@ export function drawBattery(ctx, w, h) {
     ctx.restore();
   }
 
-  // 3. Новая ракетная установка
+  // 3. Ракетная установка
   const rPos = getRocketLauncherPos(w, h);
   const rocketActive = battery.mode === "rocket";
   if (rocketLauncher.width) {

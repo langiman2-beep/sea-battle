@@ -70,7 +70,8 @@ export function fireTorpedo(w, h) {
   const tubeAngle = getTorpedoAngle(w, h);
   const dirX = Math.sin(tubeAngle);
   const dirY = -Math.cos(tubeAngle);
-  const speed = Math.min(w, h) * 0.125;
+  // Торпеда идёт медленнее — теперь нужно рассчитывать упреждение по курсу корабля
+  const speed = Math.min(w, h) * 0.085;
 
   torpedoes.push({
     x: startX,
@@ -78,13 +79,15 @@ export function fireTorpedo(w, h) {
     vx: dirX * speed,
     vy: dirY * speed,
     trail: [],
-    life: 11.0,
+    life: 16.0,
   });
 }
 
 export function updateTorpedoes(dt, w, h) {
   if (roundState.status !== "playing") return;
   if (cooldown > 0) cooldown -= dt;
+
+  const horizonY = h * 0.464;
 
   for (let i = torpedoes.length - 1; i >= 0; i--) {
     const t = torpedoes[i];
@@ -144,8 +147,9 @@ export function updateTorpedoes(dt, w, h) {
       continue;
     }
 
+    // Торпеда исчезает ровно на линии горизонта и никогда не лезет в небо
     const outOfBounds =
-      t.x < -40 || t.x > w + 40 || t.y < h * 0.45 || t.y > h + 40;
+      t.x < -40 || t.x > w + 40 || t.y <= horizonY || t.y > h + 40;
     if (outOfBounds || t.life <= 0) {
       torpedoes.splice(i, 1);
     }
@@ -167,7 +171,17 @@ export function updateTorpedoes(dt, w, h) {
 }
 
 export function drawTorpedoes(ctx, w, h) {
+  const horizonY = Math.floor(h * 0.46);
+  const seaSpan = Math.max(1, h * 0.77 - horizonY);
+
+  // Обрезаем торпеды и след строго по линии горизонта, чтобы нос не торчал в небо
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, horizonY, w, h - horizonY);
+  ctx.clip();
+
   torpedoes.forEach((t) => {
+    const depth = Math.max(0.45, Math.min(1, (t.y - horizonY) / seaSpan));
     const angle = Math.atan2(t.vy, t.vx);
     const perpX = -Math.sin(angle);
     const perpY = Math.cos(angle);
@@ -176,13 +190,14 @@ export function drawTorpedoes(ctx, w, h) {
 
     t.trail.forEach((pt, idx) => {
       const ratio = (idx + 1) / t.trail.length;
-      const jitter = Math.sin(idx * 2.3 + t.life * 14) * (1.5 + ratio * 3.5);
+      const jitter =
+        Math.sin(idx * 2.3 + t.life * 14) * (1.2 + ratio * 3.0) * depth;
       ctx.fillStyle = `rgba(203, 213, 225, ${ratio * 0.28})`;
       ctx.beginPath();
       ctx.arc(
         pt.x + perpX * jitter,
         pt.y + perpY * jitter,
-        1.2 + ratio * 4.2,
+        (1.0 + ratio * 3.8) * depth,
         0,
         Math.PI * 2,
       );
@@ -191,15 +206,15 @@ export function drawTorpedoes(ctx, w, h) {
 
     ctx.save();
     ctx.strokeStyle = "rgba(226, 232, 240, 0.34)";
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = Math.max(1, 1.6 * depth);
     [-1, 1].forEach((side) => {
       ctx.beginPath();
-      ctx.moveTo(t.x + dirX * 14, t.y + dirY * 14);
+      ctx.moveTo(t.x + dirX * 12 * depth, t.y + dirY * 12 * depth);
       ctx.quadraticCurveTo(
-        t.x - dirX * 8 + perpX * side * 11,
-        t.y - dirY * 8 + perpY * side * 11,
-        t.x - dirX * 26 + perpX * side * 22,
-        t.y - dirY * 26 + perpY * side * 22,
+        t.x - dirX * 8 * depth + perpX * side * 10 * depth,
+        t.y - dirY * 8 * depth + perpY * side * 10 * depth,
+        t.x - dirX * 24 * depth + perpX * side * 20 * depth,
+        t.y - dirY * 24 * depth + perpY * side * 20 * depth,
       );
       ctx.stroke();
     });
@@ -209,15 +224,17 @@ export function drawTorpedoes(ctx, w, h) {
     ctx.translate(t.x, t.y);
     ctx.rotate(angle);
     if (torpedoSprite.width) {
-      const tw = 46;
+      const tw = 44 * depth;
       const th = tw * (torpedoSprite.height / torpedoSprite.width);
       ctx.drawImage(torpedoSprite, -tw / 2, -th / 2, tw, th);
     } else {
       ctx.fillStyle = "#18202c";
-      ctx.fillRect(-15, -3.5, 30, 7);
+      ctx.fillRect(-14 * depth, -3 * depth, 28 * depth, 6 * depth);
     }
     ctx.restore();
   });
+
+  ctx.restore();
 
   explosions.forEach((e) => {
     ctx.save();

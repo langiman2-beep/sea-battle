@@ -53,7 +53,8 @@ function spawnShell(b, w, h) {
   const dx = b.targetX - b.gx;
   const dy = b.targetY - b.gy;
   const dist = Math.hypot(dx, dy) || 1;
-  const speed = Math.min(w, h) * 0.78;
+  // Снаряды зенитки медленнее — приходится брать упреждение по курсу шахеда
+  const speed = Math.min(w, h) * 0.52;
 
   shells.push({
     x: b.gx,
@@ -61,7 +62,7 @@ function spawnShell(b, w, h) {
     vx: (dx / dist) * speed,
     vy: (dy / dist) * speed,
     trail: [],
-    life: 2.4,
+    life: 3.6,
   });
 }
 

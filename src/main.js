@@ -31,6 +31,7 @@ import {
   showHud,
 } from "./ui/controls.js";
 import { initMenu } from "./ui/menu.js";
+import { showIntro } from "./ui/intro.js";
 import { startSurfSound } from "./systems/sound.js";
 
 const canvas = document.getElementById("game");
@@ -158,7 +159,6 @@ function drawPeriscopeOverlay(w, h) {
   ctx.arc(cx, cy, 3, 0, Math.PI * 2);
   ctx.fill();
 
-  // Плашка активного орудия адаптивного размера под любой экран
   const badgeFont = Math.max(11, Math.min(14, Math.round(r * 0.085)));
   const badgeText = `${meta.title}  •  БК: ${meta.getAmmo()}`;
   ctx.font = `bold ${badgeFont}px sans-serif`;
@@ -193,14 +193,12 @@ function drawPeriscopeOverlay(w, h) {
 
   ctx.restore();
 
-  // Чёрная маска вокруг окуляра
   ctx.fillStyle = "rgba(2, 6, 12, 0.95)";
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill("evenodd");
 
-  // Ободок окуляра
   ctx.strokeStyle = "#334155";
   ctx.lineWidth = 5;
   ctx.beginPath();
@@ -268,14 +266,21 @@ function loop(ms) {
 requestAnimationFrame(loop);
 
 function finishSplash() {
+  const openBriefing = () => {
+    showIntro(() => {
+      startSurfSound();
+      showHud();
+    });
+  };
+
   if (splash) {
     splash.style.opacity = "0";
     setTimeout(() => {
       splash.remove();
-      showHud();
+      openBriefing();
     }, 500);
   } else {
-    showHud();
+    openBriefing();
   }
 }
 

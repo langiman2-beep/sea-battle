@@ -1,4 +1,4 @@
-import { battery, setMode } from "../entities/battery.js";
+import { battery, setMode, moveAim } from "../entities/battery.js";
 import { ammo, roundState } from "../systems/round.js";
 import { player } from "../systems/storage.js";
 import { setShahedBuzz } from "../systems/sound.js";
@@ -45,6 +45,32 @@ export function toggleScope() {
   const scopeBtn = document.getElementById("btn-scope");
   if (scopeBtn) {
     scopeBtn.classList.toggle("active", gameState.scope);
+  }
+}
+
+async function toggleFullscreen() {
+  const docEl = document.documentElement;
+  const isFull = document.fullscreenElement || document.webkitFullscreenElement;
+
+  try {
+    if (!isFull) {
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  } catch {
+    // На iOS Safari системный fullscreen для div может быть ограничен — молча игнорируем
   }
 }
 
@@ -192,7 +218,7 @@ export function initControls() {
         transition: opacity 0.35s ease;
       }
       .hud-timer-top {
-        position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 15;
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 15;
         background: rgba(15, 23, 32, 0.56); color: #f8fafc;
         border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 10px;
         padding: 6px 14px; font-size: 15px; font-weight: bold;
@@ -200,53 +226,54 @@ export function initControls() {
       }
       .hud-round-tag { color: #fbbf24; margin-right: 8px; }
       .hud-ammo-col {
-        position: fixed; top: 56px; left: 16px; z-index: 15;
-        display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+        position: fixed; top: 52px; left: 12px; z-index: 15;
+        display: flex; flex-direction: column; gap: 5px; pointer-events: none;
       }
       .hud-chip {
-        background: rgba(15, 23, 32, 0.36); color: #f8fafc;
+        background: rgba(15, 23, 32, 0.42); color: #f8fafc;
         border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 8px;
-        padding: 6px 10px; font-size: 13px; font-weight: bold;
-        backdrop-filter: blur(2px);
+        padding: 5px 9px; font-size: 13px; font-weight: bold;
+        backdrop-filter: blur(2px); white-space: nowrap;
       }
       .hud-chip span { color: #38bdf8; }
       .hud-miss-badge {
-        position: fixed; top: 68px; right: 16px; z-index: 15;
+        position: fixed; top: 68px; right: 14px; z-index: 15;
         display: none; align-items: center; justify-content: center;
-        width: 38px; height: 38px; border-radius: 50%;
+        width: 36px; height: 36px; border-radius: 50%;
         background: rgba(220, 38, 38, 0.92); border: 2px solid #fca5a5;
-        color: #fff; font-size: 16px; font-weight: bold;
+        color: #fff; font-size: 15px; font-weight: bold;
         box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
         pointer-events: none;
       }
       .hud-miss-badge.show { display: flex; }
       .hud-pad {
-        position: fixed; left: 20px; bottom: 20px; display: grid;
-        grid-template-columns: repeat(3, 52px); gap: 6px; z-index: 20;
+        position: fixed; left: 16px; bottom: 16px; display: grid;
+        grid-template-columns: repeat(3, 50px); gap: 5px; z-index: 20;
       }
       .hud-btn {
-        height: 52px; background: rgba(15, 23, 32, 0.78); color: #e2e8f0;
+        height: 50px; background: rgba(15, 23, 32, 0.78); color: #e2e8f0;
         border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 10px;
-        font-size: 20px; cursor: pointer; user-select: none; touch-action: none;
+        font-size: 19px; cursor: pointer; user-select: none; touch-action: none;
       }
       .hud-btn:active { background: rgba(245, 158, 11, 0.5); }
       .hud-pause-center {
-        position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+        position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
         display: flex; gap: 8px; z-index: 16;
       }
-      .pause-icon-btn {
-        width: 54px; height: 52px; font-size: 20px; font-weight: bold;
+      .pause-icon-btn,
+      .full-icon-btn {
+        width: 50px; height: 50px; font-size: 19px; font-weight: bold;
       }
       .hud-right {
-        position: fixed; right: 20px; bottom: 20px;
-        display: flex; align-items: flex-end; gap: 10px; z-index: 16;
+        position: fixed; right: 16px; bottom: 16px;
+        display: flex; align-items: flex-end; gap: 8px; z-index: 16;
       }
       .fire-stack {
-        display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
       }
       .scope-icon-btn {
-        height: 50px; font-size: 21px; font-weight: bold;
-        background: rgba(15, 23, 32, 0.42);
+        height: 48px; font-size: 20px; font-weight: bold;
+        background: rgba(15, 23, 32, 0.45);
         border: 1px solid rgba(148, 163, 184, 0.38);
         backdrop-filter: blur(4px);
       }
@@ -255,12 +282,141 @@ export function initControls() {
         border-color: #34d399;
         box-shadow: 0 0 12px rgba(52, 211, 153, 0.55);
       }
-      .mode-btn { padding: 14px 16px; font-size: 13px; font-weight: bold; }
+      .mode-btn { padding: 12px 14px; font-size: 13px; font-weight: bold; white-space: nowrap; }
       .fire-btn {
-        padding: 14px 20px; font-size: 15px; font-weight: bold;
+        padding: 12px 18px; font-size: 15px; font-weight: bold;
         background: rgba(185, 28, 28, 0.88); border-color: #f87171; color: #fff;
+        white-space: nowrap;
       }
       .fire-btn:active { background: #dc2626; }
+
+      /* Компактная адаптация для мобильных экранов */
+      @media (max-width: 920px), (max-height: 520px) {
+        .hud-timer-top {
+          top: 8px;
+          padding: 4px 10px;
+          font-size: 13px;
+        }
+        .hud-ammo-col {
+          top: 8px;
+          left: 10px;
+          flex-direction: row;
+          gap: 4px;
+        }
+        .hud-chip {
+          padding: 4px 7px;
+          font-size: 11px;
+        }
+        .hud-chip .chip-lbl {
+          display: none;
+        }
+        .hud-pad {
+          left: 10px;
+          bottom: 10px;
+          grid-template-columns: repeat(3, 42px);
+          gap: 4px;
+        }
+        .hud-btn {
+          height: 42px;
+          font-size: 16px;
+          border-radius: 8px;
+        }
+        .hud-pause-center {
+          bottom: 10px;
+          gap: 6px;
+        }
+        .pause-icon-btn,
+        .full-icon-btn {
+          width: 42px;
+          height: 42px;
+          font-size: 16px;
+        }
+        .hud-right {
+          right: 10px;
+          bottom: 10px;
+          gap: 6px;
+        }
+        .fire-stack {
+          gap: 6px;
+        }
+        .scope-icon-btn {
+          height: 40px;
+          font-size: 18px;
+        }
+        .mode-btn {
+          padding: 10px 10px;
+          font-size: 12px;
+        }
+        .fire-btn {
+          padding: 10px 12px;
+          font-size: 13px;
+        }
+      }
+
+      /* Подсказка повернуть телефон горизонтально */
+      .rotate-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+        background: rgba(7, 13, 23, 0.92);
+        color: #f8fafc;
+      }
+      @media (orientation: portrait) and (max-width: 650px) {
+        .rotate-overlay:not(.dismissed) {
+          display: flex;
+        }
+        .hud-pause-center {
+          bottom: 106px;
+        }
+      }
+      .rotate-icon {
+        font-size: 52px;
+        margin-bottom: 12px;
+      }
+      .rotate-overlay h3 {
+        margin: 0 0 8px;
+        color: #fbbf24;
+        font-size: 20px;
+      }
+      .rotate-overlay p {
+        margin: 0 0 18px;
+        color: #cbd5e1;
+        font-size: 14px;
+        max-width: 300px;
+        line-height: 1.4;
+      }
+      .rotate-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .rotate-btn {
+        padding: 11px 18px;
+        border-radius: 10px;
+        border: 1px solid #34d399;
+        background: #10b981;
+        color: #022c22;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .rotate-skip {
+        padding: 11px 16px;
+        border-radius: 10px;
+        border: 1px solid #475569;
+        background: #1e293b;
+        color: #cbd5e1;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
       .fail-modal,
       .win-modal {
         position: fixed; inset: 0; z-index: 35; display: none;
@@ -324,9 +480,9 @@ export function initControls() {
     </div>
 
     <div class="hud-ammo-col">
-      <div class="hud-chip">🚀 Торпеди: <span id="hud-torps">${ammo.torpedoes}</span></div>
-      <div class="hud-chip">💥 Снаряди: <span id="hud-shells">${ammo.aaShells}</span></div>
-      <div class="hud-chip">🎯 Ракети: <span id="hud-rockets">${ammo.rockets}</span></div>
+      <div class="hud-chip">🚀 <span class="chip-lbl">Торпеди: </span><span id="hud-torps">${ammo.torpedoes}</span></div>
+      <div class="hud-chip">💥 <span class="chip-lbl">Снаряди: </span><span id="hud-shells">${ammo.aaShells}</span></div>
+      <div class="hud-chip">🎯 <span class="chip-lbl">Ракети: </span><span id="hud-rockets">${ammo.rockets}</span></div>
     </div>
 
     <div id="hud-miss-badge" class="hud-miss-badge"><span id="hud-miss-num">0</span></div>
@@ -340,6 +496,7 @@ export function initControls() {
 
     <div class="hud-pause-center">
       <button id="btn-pause" class="hud-btn pause-icon-btn" title="Пауза">⏸</button>
+      <button id="btn-fullscreen" class="hud-btn full-icon-btn" title="На весь екран">⛶</button>
     </div>
 
     <div class="hud-right">
@@ -347,6 +504,16 @@ export function initControls() {
       <div class="fire-stack">
         <button id="btn-scope" class="hud-btn scope-icon-btn" title="Перископ / Приціл">🔭</button>
         <button id="btn-fire" class="hud-btn fire-btn">🔥 ВОГОНЬ</button>
+      </div>
+    </div>
+
+    <div id="rotate-overlay" class="rotate-overlay">
+      <div class="rotate-icon">📱🔄</div>
+      <h3>Поверни телефон горизонтально</h3>
+      <p>Так видно всю берегову батарею, море й небо без тісняви.</p>
+      <div class="rotate-actions">
+        <button id="btn-rotate-full" class="rotate-btn">⛶ На весь екран</button>
+        <button id="btn-rotate-skip" class="rotate-skip">Грати так</button>
       </div>
     </div>
 
@@ -376,17 +543,65 @@ export function initControls() {
       input.dx = 0;
       input.dy = 0;
     };
-    btn.addEventListener("mousedown", start);
-    btn.addEventListener("touchstart", start);
-    window.addEventListener("mouseup", stop);
-    window.addEventListener("touchend", stop);
+    btn.addEventListener("pointerdown", start);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   });
+
+  // Плавная наводка пальцем по экрану на телефоне (без случайных выстрелов)
+  let touchAimId = null;
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+
+  window.addEventListener("pointerdown", (e) => {
+    if (!e.target || e.target.id !== "game") return;
+    if (e.pointerType === "mouse") {
+      if (e.button === 0) triggerFire();
+      if (e.button === 2) toggleScope();
+    } else if (touchAimId === null) {
+      touchAimId = e.pointerId;
+      lastTouchX = e.clientX;
+      lastTouchY = e.clientY;
+    }
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== touchAimId || !gameState.ready) return;
+    const sens = gameState.scope ? 0.55 : 1.15;
+    const dxNorm = ((e.clientX - lastTouchX) / window.innerWidth) * sens;
+    const dyNorm = ((e.clientY - lastTouchY) / window.innerHeight) * sens;
+    lastTouchX = e.clientX;
+    lastTouchY = e.clientY;
+
+    battery.aimX += dxNorm;
+    battery.aimY += dyNorm;
+    moveAim(0, 0, 0);
+  });
+
+  const endTouchAim = (e) => {
+    if (e.pointerId === touchAimId) touchAimId = null;
+  };
+  window.addEventListener("pointerup", endTouchAim);
+  window.addEventListener("pointercancel", endTouchAim);
 
   const pauseBtn = document.getElementById("btn-pause");
   pauseBtn.addEventListener("click", () => {
     gameState.paused = !gameState.paused;
     pauseBtn.textContent = gameState.paused ? "▶" : "⏸";
     if (gameState.paused) setShahedBuzz(false);
+  });
+
+  document
+    .getElementById("btn-fullscreen")
+    .addEventListener("click", toggleFullscreen);
+
+  const rotateOverlay = document.getElementById("rotate-overlay");
+  document.getElementById("btn-rotate-full").addEventListener("click", () => {
+    toggleFullscreen();
+    rotateOverlay.classList.add("dismissed");
+  });
+  document.getElementById("btn-rotate-skip").addEventListener("click", () => {
+    rotateOverlay.classList.add("dismissed");
   });
 
   document.getElementById("btn-scope").addEventListener("click", () => {
@@ -409,12 +624,6 @@ export function initControls() {
 
   document.getElementById("btn-reload").addEventListener("click", () => {
     window.location.reload();
-  });
-
-  window.addEventListener("mousedown", (e) => {
-    if (!e.target || e.target.id !== "game") return;
-    if (e.button === 0) triggerFire();
-    if (e.button === 2) toggleScope();
   });
 
   window.addEventListener("contextmenu", (e) => {

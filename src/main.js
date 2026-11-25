@@ -37,12 +37,19 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const splash = document.getElementById("splash");
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function syncCanvasSize() {
+  const rect = canvas.getBoundingClientRect();
+  const targetW = Math.max(1, Math.round(rect.width || window.innerWidth));
+  const targetH = Math.max(1, Math.round(rect.height || window.innerHeight));
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
 }
-window.addEventListener("resize", resize);
-resize();
+
+window.addEventListener("resize", syncCanvasSize);
+window.addEventListener("orientationchange", syncCanvasSize);
+syncCanvasSize();
 
 initControls();
 bindAirTargets(getShaheds);
@@ -92,7 +99,7 @@ function drawWorld(w, h, timeSec, battleTime) {
 function drawPeriscopeOverlay(w, h) {
   const cx = w / 2;
   const cy = h / 2;
-  const r = Math.min(w, h) * 0.43;
+  const r = Math.min(w, h) * 0.46;
   const meta = SCOPE_META[battery.mode] || SCOPE_META.torpedo;
 
   ctx.save();
@@ -113,7 +120,7 @@ function drawPeriscopeOverlay(w, h) {
 
   ctx.strokeStyle = "rgba(226, 232, 240, 0.78)";
   ctx.lineWidth = 1.4;
-  const gap = 18;
+  const gap = Math.max(14, r * 0.09);
   ctx.beginPath();
   ctx.moveTo(cx - r, cy);
   ctx.lineTo(cx - gap, cy);
@@ -128,7 +135,7 @@ function drawPeriscopeOverlay(w, h) {
   const step = r * 0.14;
   ctx.beginPath();
   for (let i = 1; i <= 4; i++) {
-    const tick = i % 2 === 0 ? 10 : 6;
+    const tick = i % 2 === 0 ? 9 : 5;
     ctx.moveTo(cx - step * i, cy - tick);
     ctx.lineTo(cx - step * i, cy + tick);
     ctx.moveTo(cx + step * i, cy - tick);
@@ -148,19 +155,21 @@ function drawPeriscopeOverlay(w, h) {
 
   ctx.fillStyle = meta.color;
   ctx.beginPath();
-  ctx.arc(cx, cy, 3.2, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
   ctx.fill();
 
+  // Плашка активного орудия адаптивного размера под любой экран
+  const badgeFont = Math.max(11, Math.min(14, Math.round(r * 0.085)));
   const badgeText = `${meta.title}  •  БК: ${meta.getAmmo()}`;
-  ctx.font = "bold 14px sans-serif";
+  ctx.font = `bold ${badgeFont}px sans-serif`;
   const textW = ctx.measureText(badgeText).width;
-  const padX = 14;
-  const bw = textW + padX * 2;
-  const bh = 28;
+  const padX = Math.max(10, Math.round(badgeFont * 0.9));
+  const bw = Math.min(r * 1.65, textW + padX * 2);
+  const bh = Math.round(badgeFont * 1.9);
   const bx = cx - bw / 2;
-  const by = cy - r + 24;
+  const by = cy - r + Math.max(14, r * 0.14);
 
-  ctx.fillStyle = "rgba(9, 14, 22, 0.82)";
+  ctx.fillStyle = "rgba(9, 14, 22, 0.84)";
   ctx.strokeStyle = meta.color;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
@@ -171,24 +180,27 @@ function drawPeriscopeOverlay(w, h) {
   ctx.fillStyle = meta.color;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(badgeText, cx, by + bh / 2 + 1);
+  ctx.fillText(badgeText, cx, by + bh / 2 + 1, bw - 10);
 
-  ctx.font = "bold 12px monospace";
-  ctx.fillStyle = "rgba(226, 232, 240, 0.8)";
+  const subFont = Math.max(10, Math.min(12, Math.round(r * 0.072)));
+  ctx.font = `bold ${subFont}px monospace`;
+  ctx.fillStyle = "rgba(226, 232, 240, 0.82)";
   ctx.fillText(
     gameState.paused ? "ПАУЗА  •  ПЕРИСКОП x2.6" : "ПЕРИСКОП  x2.6",
     cx,
-    cy + r - 20,
+    cy + r - Math.max(14, r * 0.11),
   );
 
   ctx.restore();
 
-  ctx.fillStyle = "rgba(2, 6, 12, 0.94)";
+  // Чёрная маска вокруг окуляра
+  ctx.fillStyle = "rgba(2, 6, 12, 0.95)";
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill("evenodd");
 
+  // Ободок окуляра
   ctx.strokeStyle = "#334155";
   ctx.lineWidth = 5;
   ctx.beginPath();
@@ -202,6 +214,8 @@ let last = 0;
 let battleTime = 0;
 
 function loop(ms) {
+  syncCanvasSize();
+
   const dt = Math.min((ms - last) / 1000, 0.05);
   last = ms;
   const timeSec = ms / 1000;
@@ -247,7 +261,6 @@ function loop(ms) {
     drawBattery(ctx, w, h);
   }
 
-  // Надпись про чайку всегда поверх и чётко читается в перископе
   drawGullCallouts(ctx, w, h, gameState.scope);
 
   requestAnimationFrame(loop);

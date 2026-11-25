@@ -222,10 +222,29 @@ export function initControls() {
       .hud-layer {
         transition: opacity 0.35s ease;
       }
+      @keyframes missPulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 10px rgba(239, 68, 68, 0.65);
+        }
+        50% {
+          transform: scale(1.16);
+          box-shadow: 0 0 20px rgba(248, 113, 113, 0.95);
+        }
+      }
       .hud-top-bar {
         position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 20;
-        display: flex; align-items: center; gap: 8px; pointer-events: none;
+        display: flex; align-items: center; gap: 10px; pointer-events: none;
       }
+      .hud-miss-badge {
+        display: none; align-items: center; justify-content: center;
+        width: 38px; height: 38px; border-radius: 50%;
+        background: rgba(220, 38, 38, 0.94); border: 2px solid #fca5a5;
+        color: #fff; font-size: 16px; font-weight: bold;
+        pointer-events: none; flex-shrink: 0;
+        animation: missPulse 1.15s ease-in-out infinite;
+      }
+      .hud-miss-badge.show { display: flex; }
       .hud-timer-top {
         background: rgba(15, 23, 32, 0.56); color: #f8fafc;
         border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 10px;
@@ -249,16 +268,6 @@ export function initControls() {
         backdrop-filter: blur(2px); white-space: nowrap;
       }
       .hud-chip span { color: #38bdf8; }
-      .hud-miss-badge {
-        position: fixed; top: 68px; right: 16px; z-index: 15;
-        display: none; align-items: center; justify-content: center;
-        width: 36px; height: 36px; border-radius: 50%;
-        background: rgba(220, 38, 38, 0.92); border: 2px solid #fca5a5;
-        color: #fff; font-size: 15px; font-weight: bold;
-        box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
-        pointer-events: none;
-      }
-      .hud-miss-badge.show { display: flex; }
       .hud-pause-left {
         position: fixed; left: 16px; top: 48%; transform: translateY(-50%);
         z-index: 20;
@@ -286,15 +295,21 @@ export function initControls() {
       }
       .mode-btn {
         height: auto;
-        padding: 9px 12px; font-size: 13px; font-weight: bold; white-space: nowrap;
-        margin-bottom: 18px;
-        background: rgba(15, 23, 32, 0.62);
+        min-width: 156px;
+        min-height: 60px;
+        padding: 14px 18px;
+        font-size: 16px;
+        font-weight: bold;
+        white-space: nowrap;
+        border-radius: 14px;
+        margin-bottom: 20px;
+        background: rgba(15, 23, 32, 0.66);
         backdrop-filter: blur(3px);
       }
       .scope-icon-btn {
-        width: 60px; height: 60px; font-size: 25px; font-weight: bold;
+        width: 60px; height: 60px; font-size: 26px; font-weight: bold;
         border-radius: 14px;
-        margin-bottom: 34px;
+        margin-bottom: 32px;
         background: rgba(15, 23, 32, 0.45);
         border: 1px solid rgba(148, 163, 184, 0.42);
         backdrop-filter: blur(4px);
@@ -322,7 +337,12 @@ export function initControls() {
       @media (max-width: 920px), (max-height: 520px) {
         .hud-top-bar {
           top: 8px;
-          gap: 6px;
+          gap: 7px;
+        }
+        .hud-miss-badge {
+          width: 32px;
+          height: 32px;
+          font-size: 14px;
         }
         .hud-timer-top {
           padding: 4px 10px;
@@ -346,13 +366,6 @@ export function initControls() {
         }
         .hud-chip .chip-lbl {
           display: none;
-        }
-        .hud-miss-badge {
-          top: 66px;
-          right: 12px;
-          width: 32px;
-          height: 32px;
-          font-size: 14px;
         }
         .hud-pause-left {
           left: 10px;
@@ -381,16 +394,19 @@ export function initControls() {
         }
         .mode-btn {
           height: auto;
-          padding: 7px 10px;
-          font-size: 11px;
-          margin-bottom: 12px;
+          min-width: 134px;
+          min-height: 54px;
+          padding: 12px 14px;
+          font-size: 15px;
+          border-radius: 12px;
+          margin-bottom: 16px;
         }
         .scope-icon-btn {
-          width: 54px;
-          height: 54px;
-          font-size: 23px;
+          width: 56px;
+          height: 56px;
+          font-size: 24px;
           border-radius: 12px;
-          margin-bottom: 28px;
+          margin-bottom: 24px;
         }
         .fire-btn {
           width: 68px;
@@ -520,6 +536,7 @@ export function initControls() {
     </style>
 
     <div class="hud-top-bar">
+      <div id="hud-miss-badge" class="hud-miss-badge" title="Пропущені цілі"><span id="hud-miss-num">0</span></div>
       <div class="hud-timer-top">
         <span class="hud-round-tag">Раунд <span id="hud-round">${roundState.round}</span></span>
         ⏱ <span id="hud-timer">${formatTimer(roundState.timeLeft)}</span>
@@ -532,8 +549,6 @@ export function initControls() {
       <div class="hud-chip">💥 <span class="chip-lbl">Снаряди: </span><span id="hud-shells">${ammo.aaShells}</span></div>
       <div class="hud-chip">🎯 <span class="chip-lbl">Ракети: </span><span id="hud-rockets">${ammo.rockets}</span></div>
     </div>
-
-    <div id="hud-miss-badge" class="hud-miss-badge"><span id="hud-miss-num">0</span></div>
 
     <div class="hud-pause-left">
       <button id="btn-pause" class="hud-btn pause-icon-btn" title="Пауза">⏸</button>
@@ -548,7 +563,7 @@ export function initControls() {
 
     <div class="hud-right">
       <button id="btn-mode" class="hud-btn mode-btn">${getModeLabel(battery.mode)}</button>
-      <button id="btn-scope" class="hud-btn scope-icon-btn" title="Перископ / Приціл">🔭</button>
+      <button id="btn-scope" class="hud-btn scope-icon-btn" title="Приціл / Збільшення">🔍</button>
       <button id="btn-fire" class="hud-btn fire-btn">
         <span class="fire-ico">🔥</span>
         <span class="fire-txt">ВОГОНЬ</span>

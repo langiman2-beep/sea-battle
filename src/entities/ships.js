@@ -39,8 +39,9 @@ const shipSprite = loadSprite(shipSrc);
 const transportSprite = loadSprite(transportSrc);
 
 const LANES = [
-  { y: 0.53, scale: 1.0, speed: 0.011 },
-  { y: 0.59, scale: 1.45, speed: 0.014 },
+  { y: 0.482, scale: 0.52, speed: 0.008 }, // дальняя линия у самого горизонта
+  { y: 0.535, scale: 1.0, speed: 0.011 }, // средняя линия
+  { y: 0.595, scale: 1.45, speed: 0.014 }, // ближняя линия
 ];
 
 export const ships = [];
@@ -159,7 +160,7 @@ export function drawShips(ctx, w, h, time) {
     const bob =
       s.sinking && s.sinkTime >= 1.8
         ? Math.sin(time * 1.5 + s.phase) * (1 - s.sinkProgress)
-        : Math.sin(time * 2.0 + s.phase) * 2;
+        : Math.sin(time * 2.0 + s.phase) * (1.2 + s.scale * 0.7);
     const sy = Math.round(s.y * h + bob);
 
     ctx.save();

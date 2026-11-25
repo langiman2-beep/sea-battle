@@ -222,14 +222,22 @@ export function initControls() {
       .hud-layer {
         transition: opacity 0.35s ease;
       }
+      .hud-top-bar {
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 20;
+        display: flex; align-items: center; gap: 8px; pointer-events: none;
+      }
       .hud-timer-top {
-        position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 15;
         background: rgba(15, 23, 32, 0.56); color: #f8fafc;
         border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 10px;
         padding: 6px 14px; font-size: 15px; font-weight: bold;
         backdrop-filter: blur(3px); pointer-events: none; white-space: nowrap;
       }
       .hud-round-tag { color: #fbbf24; margin-right: 8px; }
+      .full-icon-btn {
+        width: 38px; height: 38px; font-size: 17px; font-weight: bold;
+        background: rgba(15, 23, 32, 0.56); pointer-events: auto;
+        display: flex; align-items: center; justify-content: center; padding: 0;
+      }
       .hud-ammo-col {
         position: fixed; top: 52px; left: 12px; z-index: 15;
         display: flex; flex-direction: column; gap: 5px; pointer-events: none;
@@ -242,7 +250,7 @@ export function initControls() {
       }
       .hud-chip span { color: #38bdf8; }
       .hud-miss-badge {
-        position: fixed; top: 68px; right: 14px; z-index: 15;
+        position: fixed; top: 68px; right: 16px; z-index: 15;
         display: none; align-items: center; justify-content: center;
         width: 36px; height: 36px; border-radius: 50%;
         background: rgba(220, 38, 38, 0.92); border: 2px solid #fca5a5;
@@ -251,6 +259,14 @@ export function initControls() {
         pointer-events: none;
       }
       .hud-miss-badge.show { display: flex; }
+      .hud-pause-left {
+        position: fixed; left: 16px; top: 48%; transform: translateY(-50%);
+        z-index: 20;
+      }
+      .pause-icon-btn {
+        width: 48px; height: 48px; font-size: 19px; font-weight: bold;
+        background: rgba(15, 23, 32, 0.62);
+      }
       .hud-pad {
         position: fixed; left: 16px; bottom: 16px; display: grid;
         grid-template-columns: repeat(3, 50px);
@@ -264,46 +280,59 @@ export function initControls() {
         font-size: 19px; cursor: pointer; user-select: none; touch-action: none;
       }
       .hud-btn:active { background: rgba(245, 158, 11, 0.5); }
-      .hud-pause-center {
-        position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-        display: flex; gap: 8px; z-index: 16;
-      }
-      .pause-icon-btn,
-      .full-icon-btn {
-        width: 50px; height: 50px; font-size: 19px; font-weight: bold;
-      }
       .hud-right {
-        position: fixed; right: 16px; bottom: 16px;
-        display: flex; align-items: flex-end; gap: 10px; z-index: 16;
+        position: fixed; right: 18px; bottom: 18px;
+        display: flex; flex-direction: column; align-items: flex-end; z-index: 16;
       }
-      .fire-stack {
-        display: flex; flex-direction: column; align-items: stretch; gap: 22px;
+      .mode-btn {
+        height: auto;
+        padding: 9px 12px; font-size: 13px; font-weight: bold; white-space: nowrap;
+        margin-bottom: 18px;
+        background: rgba(15, 23, 32, 0.62);
+        backdrop-filter: blur(3px);
       }
       .scope-icon-btn {
-        height: 48px; font-size: 20px; font-weight: bold;
+        width: 60px; height: 60px; font-size: 25px; font-weight: bold;
+        border-radius: 14px;
+        margin-bottom: 34px;
         background: rgba(15, 23, 32, 0.45);
-        border: 1px solid rgba(148, 163, 184, 0.38);
+        border: 1px solid rgba(148, 163, 184, 0.42);
         backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
       }
       .scope-icon-btn.active {
         background: rgba(16, 185, 129, 0.34);
         border-color: #34d399;
         box-shadow: 0 0 12px rgba(52, 211, 153, 0.55);
       }
-      .mode-btn { padding: 12px 14px; font-size: 13px; font-weight: bold; white-space: nowrap; }
       .fire-btn {
-        padding: 12px 18px; font-size: 15px; font-weight: bold;
-        background: rgba(185, 28, 28, 0.88); border-color: #f87171; color: #fff;
-        white-space: nowrap;
+        width: 78px; height: 78px; border-radius: 50%; padding: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 2px;
+        background: rgba(185, 28, 28, 0.9);
+        border: 2px solid #f87171;
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(220, 38, 38, 0.48);
       }
-      .fire-btn:active { background: #dc2626; }
+      .fire-btn:active { background: #dc2626; transform: scale(0.95); }
+      .fire-ico { font-size: 20px; line-height: 1; }
+      .fire-txt { font-size: 11px; font-weight: bold; letter-spacing: 0.4px; line-height: 1; }
 
       /* Компактная адаптация для мобильных экранов */
       @media (max-width: 920px), (max-height: 520px) {
-        .hud-timer-top {
+        .hud-top-bar {
           top: 8px;
+          gap: 6px;
+        }
+        .hud-timer-top {
           padding: 4px 10px;
           font-size: 13px;
+        }
+        .full-icon-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 15px;
+          border-radius: 8px;
         }
         .hud-ammo-col {
           top: 8px;
@@ -318,6 +347,22 @@ export function initControls() {
         .hud-chip .chip-lbl {
           display: none;
         }
+        .hud-miss-badge {
+          top: 66px;
+          right: 12px;
+          width: 32px;
+          height: 32px;
+          font-size: 14px;
+        }
+        .hud-pause-left {
+          left: 10px;
+          top: 38%;
+        }
+        .pause-icon-btn {
+          width: 42px;
+          height: 42px;
+          font-size: 16px;
+        }
         .hud-pad {
           left: 10px;
           bottom: 10px;
@@ -330,36 +375,30 @@ export function initControls() {
           font-size: 16px;
           border-radius: 8px;
         }
-        .hud-pause-center {
-          bottom: 10px;
-          gap: 6px;
-        }
-        .pause-icon-btn,
-        .full-icon-btn {
-          width: 42px;
-          height: 42px;
-          font-size: 16px;
-        }
         .hud-right {
-          right: 10px;
-          bottom: 10px;
-          gap: 8px;
-        }
-        .fire-stack {
-          gap: 18px;
-        }
-        .scope-icon-btn {
-          height: 40px;
-          font-size: 18px;
+          right: 12px;
+          bottom: 12px;
         }
         .mode-btn {
-          padding: 10px 10px;
-          font-size: 12px;
+          height: auto;
+          padding: 7px 10px;
+          font-size: 11px;
+          margin-bottom: 12px;
+        }
+        .scope-icon-btn {
+          width: 54px;
+          height: 54px;
+          font-size: 23px;
+          border-radius: 12px;
+          margin-bottom: 28px;
         }
         .fire-btn {
-          padding: 10px 12px;
-          font-size: 13px;
+          width: 68px;
+          height: 68px;
+          border-radius: 50%;
         }
+        .fire-ico { font-size: 18px; }
+        .fire-txt { font-size: 10px; }
       }
 
       /* Подсказка повернуть телефон горизонтально */
@@ -379,9 +418,6 @@ export function initControls() {
       @media (orientation: portrait) and (max-width: 650px) {
         .rotate-overlay:not(.dismissed) {
           display: flex;
-        }
-        .hud-pause-center {
-          bottom: 106px;
         }
       }
       .rotate-icon {
@@ -483,9 +519,12 @@ export function initControls() {
       }
     </style>
 
-    <div class="hud-timer-top">
-      <span class="hud-round-tag">Раунд <span id="hud-round">${roundState.round}</span></span>
-      ⏱ <span id="hud-timer">${formatTimer(roundState.timeLeft)}</span>
+    <div class="hud-top-bar">
+      <div class="hud-timer-top">
+        <span class="hud-round-tag">Раунд <span id="hud-round">${roundState.round}</span></span>
+        ⏱ <span id="hud-timer">${formatTimer(roundState.timeLeft)}</span>
+      </div>
+      <button id="btn-fullscreen" class="hud-btn full-icon-btn" title="На весь екран">⛶</button>
     </div>
 
     <div class="hud-ammo-col">
@@ -496,6 +535,10 @@ export function initControls() {
 
     <div id="hud-miss-badge" class="hud-miss-badge"><span id="hud-miss-num">0</span></div>
 
+    <div class="hud-pause-left">
+      <button id="btn-pause" class="hud-btn pause-icon-btn" title="Пауза">⏸</button>
+    </div>
+
     <div class="hud-pad">
       <div></div><button class="hud-btn" data-dir="up">▲</button><div></div>
       <button class="hud-btn" data-dir="left">◀</button>
@@ -503,17 +546,13 @@ export function initControls() {
       <button class="hud-btn" data-dir="right">▶</button>
     </div>
 
-    <div class="hud-pause-center">
-      <button id="btn-pause" class="hud-btn pause-icon-btn" title="Пауза">⏸</button>
-      <button id="btn-fullscreen" class="hud-btn full-icon-btn" title="На весь екран">⛶</button>
-    </div>
-
     <div class="hud-right">
       <button id="btn-mode" class="hud-btn mode-btn">${getModeLabel(battery.mode)}</button>
-      <div class="fire-stack">
-        <button id="btn-scope" class="hud-btn scope-icon-btn" title="Перископ / Приціл">🔭</button>
-        <button id="btn-fire" class="hud-btn fire-btn">🔥 ВОГОНЬ</button>
-      </div>
+      <button id="btn-scope" class="hud-btn scope-icon-btn" title="Перископ / Приціл">🔭</button>
+      <button id="btn-fire" class="hud-btn fire-btn">
+        <span class="fire-ico">🔥</span>
+        <span class="fire-txt">ВОГОНЬ</span>
+      </button>
     </div>
 
     <div id="rotate-overlay" class="rotate-overlay">

@@ -30,7 +30,7 @@ export function fireAA(w, h) {
 
   const count = Math.min(SHELLS_PER_BURST, ammo.aaShells);
   ammo.aaShells -= count;
-  cooldown = 0.85;
+  cooldown = 1.05;
 
   const gx = w * 0.59;
   const gy = h * 0.83 - Math.min(w, h) * 0.28 * 0.15;
@@ -39,11 +39,12 @@ export function fireAA(w, h) {
 
   for (let i = 0; i < count; i++) {
     bursts.push({
-      delay: i * 0.09,
+      delay: i * 0.12,
       gx,
       gy,
-      targetX: targetX + (Math.random() - 0.5) * 26,
-      targetY: targetY + (Math.random() - 0.5) * 22,
+      // Узкая кучность — стреляет почти в точку, а не веером
+      targetX: targetX + (Math.random() - 0.5) * 8,
+      targetY: targetY + (Math.random() - 0.5) * 6,
     });
   }
 }
@@ -53,8 +54,8 @@ function spawnShell(b, w, h) {
   const dx = b.targetX - b.gx;
   const dy = b.targetY - b.gy;
   const dist = Math.hypot(dx, dy) || 1;
-  // Снаряды зенитки медленнее — приходится брать упреждение по курсу шахеда
-  const speed = Math.min(w, h) * 0.52;
+  // Медленный полёт снаряда — нужно брать нормальное упреждение
+  const speed = Math.min(w, h) * 0.34;
 
   shells.push({
     x: b.gx,
@@ -62,7 +63,7 @@ function spawnShell(b, w, h) {
     vx: (dx / dist) * speed,
     vy: (dy / dist) * speed,
     trail: [],
-    life: 3.6,
+    life: 5.0,
   });
 }
 
@@ -82,13 +83,13 @@ export function updateAA(dt, w, h) {
     const sh = shells[i];
     sh.life -= dt;
     sh.trail.push({ x: sh.x, y: sh.y });
-    if (sh.trail.length > 7) sh.trail.shift();
+    if (sh.trail.length > 5) sh.trail.shift();
 
     sh.x += sh.vx * dt;
     sh.y += sh.vy * dt;
 
     let hitShahed = null;
-    const hitRadius = Math.min(w, h) * 0.032;
+    const hitRadius = Math.min(w, h) * 0.022;
     for (let j = 0; j < shaheds.length; j++) {
       const d = shaheds[j];
       if (d.falling) continue;
@@ -164,15 +165,15 @@ export function drawAA(ctx, w, h) {
   shells.forEach((sh) => {
     sh.trail.forEach((pt, idx) => {
       const ratio = (idx + 1) / sh.trail.length;
-      ctx.fillStyle = `rgba(253, 224, 71, ${ratio * 0.42})`;
+      ctx.fillStyle = `rgba(253, 224, 71, ${ratio * 0.38})`;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 0.7 + ratio * 1.1, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, 0.4 + ratio * 0.7, 0, Math.PI * 2);
       ctx.fill();
     });
 
     ctx.fillStyle = "#fef08a";
     ctx.beginPath();
-    ctx.arc(sh.x, sh.y, 1.8, 0, Math.PI * 2);
+    ctx.arc(sh.x, sh.y, 1.25, 0, Math.PI * 2);
     ctx.fill();
   });
 
